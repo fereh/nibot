@@ -13,7 +13,7 @@ function unixTimestamp() {
 }
 
 
-var bots = [];
+var sessions = [];
 var states = [];
 
 verifyHandler(session) {
@@ -69,37 +69,21 @@ sessions[duplicate] = session;
 	
 }
 
-function redirectHandler(res) {
+function redirectHandler(res, state) {
 
-	let state = generateToken(32);
-	let scopes = [ "chat:read", "chat:edit" ];
+	/*let state = generateToken(32);
+	let scopes = [ "chat:read", "chat:edit" ];*/
 
 	res.writeHead(302, {
-		"Location": twitch.auth.redirect(scopes.join(" "), state),
+		"Location": twitch.auth.redirect(
+			state.scopes.join(" "), state.id),
 	});
 	res.end();
 
-	states.push(state);
+	/*states.push(state);*/
 }
 
-function authorizeHandler(res, url, req) {
-
-	// check for session cookie
-	let cookie = req.getHeader("Cookie");
-	if (cookie && cookie[0]) {
-		cookie = cookie[0].split("=");
-		if (cookie[0] === "Id") {
-			let session = sessions.find(x => x.id === cookie[1]);
-		if (session !== -1) {
-if (verifyHandler(session)) {
-res.writeHead(302, { "Location", "https://twitch.tv" });
-res.end();
-// start main app here
-return;
-}
-			}
-		}
-	}
+function authorizeHandler(res, url, grantHandler) {
 
 	// check for grant request from Twitch
 	let params = url.searchParams;
@@ -119,30 +103,15 @@ return;
 	redirectHandler(res);
 }
 
-/*var handlers = {
-	"authorize": authorizeHandler,
-};*/
-
 function requestHandler(req, res) {
 	let url = new URL("http://interface" + req.url);
-	/*let op = url.pathname.substring(1).toLowerCase();
 
-	// sanitization
-	if (/[^a-z\/]/.test(op)) {
-		res.writeHead(400);
-		res.end("Bad format\r\n");
-		return;
-	}
+	let state = {};
+	state.id = generateToken(32);
+	state.scopes = [ "chat:read", "chat:edit" ];
+	redirectHandler(res, state);
+	states.push(state);
 
-	let handler = handlers[op];
-	if (!handler) {
-		res.writeHead(404);
-		res.end("Not found\r\n");
-		return;
-	}*/
-
-	let handler = authorizeHandler;
-	handler(res, url, req);
 }
 
 (function main() {
