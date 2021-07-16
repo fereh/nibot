@@ -1,5 +1,3 @@
-
-//const fs = require("fs");
 const crypto = require("crypto");
 
 const twitch = require("./twitch.js");
@@ -75,39 +73,13 @@ function authorizeHandler(res, url, req) {
 	redirectHandler(res);
 }
 
-function revokeHandler(res, url, req) {
-	let params = url.searchParams;
-
-	if (!params.has("id")) {
-		res.writeHead(400);
-		res.end("Missing ID\r\n");
-		return;
-	}
-
-	let id = params.get("id");
-	let session = sessions.find(x => x.id === id);
-
-	if (!session) {
-		res.writeHead(400);
-		res.end("Bad ID\r\n");
-		return;
-	}
-
-	twitch.auth.revoke(session.accessToken).then(() => {
-		session.id = null;
-	});
-
-	res.writeHead(302, { "Location": "/" });
-	res.end();
-}
-
-var handlers = {
+/*var handlers = {
 	"authorize": authorizeHandler,
-};
+};*/
 
 function requestHandler(req, res) {
 	let url = new URL("http://interface" + req.url);
-	let op = url.pathname.substring(1).toLowerCase();
+	/*let op = url.pathname.substring(1).toLowerCase();
 
 	// sanitization
 	if (/[^a-z\/]/.test(op)) {
@@ -121,8 +93,9 @@ function requestHandler(req, res) {
 		res.writeHead(404);
 		res.end("Not found\r\n");
 		return;
-	}
+	}*/
 
+	let handler = authorizeHandler;
 	handler(res, url, req);
 }
 
