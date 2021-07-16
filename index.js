@@ -79,7 +79,7 @@ function authorizeHandler(res, url, req) {
 	if (cookie && cookie[0]) {
 		cookie = cookie[0].split("=");
 		if (cookie[0] === "Id") {
-			let session = sessions.find(x => x.id === id);
+			let session = sessions.find(x => x.id === cookie[1]);
 			if (session !== -1) {
 				// authorized, start main app
 				return;
