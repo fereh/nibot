@@ -74,19 +74,6 @@ function redirectHandler(res) {
 
 function authorizeHandler(res, url, req) {
 
-	// check for session cookie
-	let cookie = req.getHeader("Cookie");
-	if (cookie && cookie[0]) {
-		cookie = cookie[0].split("=");
-		if (cookie[0] === "Id") {
-			let session = sessions.find(x => x.id === cookie[1]);
-			if (session !== -1) {
-				// authorized, start main app
-				return;
-			}
-		}
-	}
-
 	// check for grant request from Twitch
 	let params = url.searchParams;
 	if (params.has("code") && params.has("scope") && params.has("state")) {
@@ -98,6 +85,19 @@ function authorizeHandler(res, url, req) {
 			grantHandler(res, params.get("code"));
 			// discard 'scope' param
 			return;
+		}
+	}
+
+	// check for session cookie
+	let cookie = req.getHeader("Cookie");
+	if (cookie && cookie[0]) {
+		cookie = cookie[0].split("=");
+		if (cookie[0] === "Id") {
+			let session = sessions.find(x => x.id === cookie[1]);
+			if (session !== -1) {
+				// authorized, start main app
+				return;
+			}
 		}
 	}
 
