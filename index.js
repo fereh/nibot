@@ -19,17 +19,18 @@ var states = [];
 
 function grantHandler(res, authCode) {
 
-	let account = {};
+	let session = {};
+	session.id = generateToken(32);
 
 	// buy the access token
 	twitch.auth.token(authCode).then(json => {
 		if (json.status >= 400) {
 		}
 
-		user.accessToken = json.access_token;
-		user.refreshToken = json.refresh_token;
+		session.accessToken = json.access_token;
+		session.refreshToken = json.refresh_token;
 
-		// fetch user data
+		// fetch session data
 		twitch.auth.userInfo(session.accessToken).then(json => {
 			if (json.status >= 400) {
 			}
@@ -37,21 +38,27 @@ function grantHandler(res, authCode) {
 			res.writeHead(302, { "Location": "/" });
 			res.end();
 
-			user.id = json.sub;
-			user.login = json.preferred_username;
+			session.id = json.sub;
+			session.login = json.preferred_username;
 
 			// overwrite existing entry
 			let duplicate = sessions.findIndex(x => x.id === session.id);
 			if (duplicate != -1) {
-				users[duplicate] = user;
+				sessions[duplicate] = session;
 			}
 			else {
-				users.push(user);
+				sessions.push(session);
 			}
 
 			writeUsers();
 		});
 	});
+
+	res.writeHead(302, {
+		"Location": "https://twitch.tv",
+		"Set-Cookie": session.id,
+	});
+	res.end();
 }
 
 function redirectHandler(res) {
@@ -87,39 +94,13 @@ function authorizeHandler(res, url, req) {
 	redirectHandler(res);
 }
 
-function revokeHandler(res, url, req) {
-	let params = url.searchParams;
-
-	if (!params.has("id")) {
-		res.writeHead(400);
-		res.end("Missing ID\r\n");
-		return;
-	}
-
-	let id = params.get("id");
-	let session = sessions.find(x => x.id === id);
-
-	if (!session) {
-		res.writeHead(400);
-		res.end("Bad ID\r\n");
-		return;
-	}
-
-	twitch.auth.revoke(session.accessToken).then(() => {
-		session.id = null;
-	});
-
-	res.writeHead(302, { "Location": "/" });
-	res.end();
-}
-
-var handlers = {
+/*var handlers = {
 	"authorize": authorizeHandler,
-};
+};*/
 
 function requestHandler(req, res) {
 	let url = new URL("http://interface" + req.url);
-	let op = url.pathname.substring(1).toLowerCase();
+	/*let op = url.pathname.substring(1).toLowerCase();
 
 	// sanitization
 	if (/[^a-z\/]/.test(op)) {
@@ -133,8 +114,9 @@ function requestHandler(req, res) {
 		res.writeHead(404);
 		res.end("Not found\r\n");
 		return;
-	}
+	}*/
 
+	let handler = authorizeHandler;
 	handler(res, url, req);
 }
 
