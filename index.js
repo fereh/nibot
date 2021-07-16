@@ -20,6 +20,7 @@ var states = [];
 function grantHandler(res, authCode) {
 
 	let session = {};
+session.id = generateToken(32);
 
 	// buy the access token
 	twitch.auth.token(authCode).then(json => {
@@ -36,7 +37,10 @@ function grantHandler(res, authCode) {
 		sessions.push(session);
 	});
 
-	res.writeHead(302, { "Location": "/" });
+	res.writeHead(302, {
+"Location": "https://twitch.tv",
+"Set-Cookie: session.id,
+});
 	res.end();
 }
 
