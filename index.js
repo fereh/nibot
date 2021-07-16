@@ -16,7 +16,6 @@ function unixTimestamp() {
 var bots = [];
 var states = [];
 
-
 function grantHandler(res, authCode) {
 
 	let session = {};
@@ -80,8 +79,11 @@ function authorizeHandler(res, url, req) {
 	if (cookie && cookie[0]) {
 		cookie = cookie[0].split("=");
 		if (cookie[0] === "Id") {
-			cookieHandler(res, cookie[1]);
-			return;
+			let session = sessions.find(x => x.id === id);
+			if (session !== -1) {
+				// authorized, start main app
+				return;
+			}
 		}
 	}
 
