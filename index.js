@@ -80,9 +80,13 @@ function authorizeHandler(res, url, req) {
 		cookie = cookie[0].split("=");
 		if (cookie[0] === "Id") {
 			let session = sessions.find(x => x.id === cookie[1]);
-			if (session !== -1) {
-				// authorized, start main app
-				return;
+		if (session !== -1) {
+if (verifyHandler(session)) {
+res.writeHead(302, { "Location", "https://twitch.tv" });
+res.end();
+// start main app here
+return;
+}
 			}
 		}
 	}
