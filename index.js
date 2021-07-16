@@ -16,6 +16,16 @@ function unixTimestamp() {
 var bots = [];
 var states = [];
 
+verifyHandler(session) {
+twitch.auth.validate(session.accessToken).then(json => {
+if (json.status !== 200) {
+// test what error response looks like
+// twitch.auth.refresh()
+}
+return true;
+});
+}
+
 function grantHandler(res, authCode) {
 
 	let session = {};
