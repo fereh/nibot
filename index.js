@@ -24,41 +24,40 @@ function grantHandler(res, authCode) {
 
 	// buy the access token
 	twitch.auth.token(authCode).then(json => {
-		if (json.status >= 400) {
-		}
-
 		session.accessToken = json.access_token;
 		session.refreshToken = json.refresh_token;
 
-		// fetch session data
+		// associate user info
 		twitch.auth.userInfo(session.accessToken).then(json => {
-			if (json.status >= 400) {
-			}
 
-			res.writeHead(302, { "Location": "/" });
-			res.end();
+// can redirect now that we know success
+res.setHeader("Set-Cookie", [
+"Id=" + session.id,
+"SameSite=Strict",
+"HttpOnly",
+"Secure",
+]);
+res.writeHead(302, { "Location": "https://twitch.tv" });
+res.end();
 
-			session.id = json.sub;
-			session.login = json.preferred_username;
+			session.userId = json.sub;
+			session.userLogin = json.preferred_username;
 
 			// overwrite existing entry
-			let duplicate = sessions.findIndex(x => x.id === session.id);
-			if (duplicate != -1) {
-				sessions[duplicate] = session;
+			let duplicate = sessions.findIndex(x => x.userId === session.userId);
+			if (duplicate == -1) {
+sessions.push(session);
 			}
 			else {
-				sessions.push(session);
+twitch.auth.revoke(sessions[duplicate].accessToken);
+sessions[duplicate] = session;
 			}
-
+				
 			writeUsers();
 		});
 	});
 
-	res.writeHead(302, {
-		"Location": "https://twitch.tv",
-		"Set-Cookie": session.id,
-	});
-	res.end();
+	
 }
 
 function redirectHandler(res) {
@@ -75,6 +74,16 @@ function redirectHandler(res) {
 }
 
 function authorizeHandler(res, url, req) {
+
+	// check for session cookie
+	let cookie = req.getHeader("Cookie");
+	if (cookie && cookie[0]) {
+		cookie = cookie[0].split("=");
+		if (cookie[0] === "Id") {
+			cookieHandler(res, cookie[1]);
+			return;
+		}
+	}
 
 	// check for grant request from Twitch
 	let params = url.searchParams;
