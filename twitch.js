@@ -84,7 +84,7 @@ auth.token = function (authCode) {
 };
 
 auth.refresh = function (refreshToken) {
-	return this.post("/refresh", {
+	return this.post("/token", {
 		"grant_type": "refresh_token",
 		"refresh_token": refreshToken,
 		"client_id": client.id,
