@@ -12,7 +12,6 @@ function unixTimestamp() {
     return Math.floor(Date.now() / 1000);
 }
 
-
 var sessions = [];
 var states = [];
 
@@ -70,17 +69,11 @@ sessions[duplicate] = session;
 }
 
 function redirectHandler(res, state) {
-
-	/*let state = generateToken(32);
-	let scopes = [ "chat:read", "chat:edit" ];*/
-
+	// todo: set force_verify in twitch.auth.redirect
 	res.writeHead(302, {
-		"Location": twitch.auth.redirect(
-			state.scopes.join(" "), state.id),
+		"Location": twitch.auth.redirect(state.scopes.join(" "), state.id),
 	});
 	res.end();
-
-	/*states.push(state);*/
 }
 
 function authorizeHandler(res, url, grantHandler) {
@@ -89,8 +82,8 @@ function authorizeHandler(res, url, grantHandler) {
 	let params = url.searchParams;
 	if (params.has("code") && params.has("scope") && params.has("state")) {
 		// lookup state
-		let state = params.get("state");
-		state = states.find(x => x === state);
+		let id = params.get("state");
+		state = states.find(x.id => x.id === id);
 
 		if (state) {
 			grantHandler(res, params.get("code"));
@@ -106,12 +99,14 @@ function authorizeHandler(res, url, grantHandler) {
 function requestHandler(req, res) {
 	let url = new URL("http://interface" + req.url);
 
+	
+
+	// connect chatbot account
 	let state = {};
 	state.id = generateToken(32);
 	state.scopes = [ "chat:read", "chat:edit" ];
 	redirectHandler(res, state);
 	states.push(state);
-
 }
 
 (function main() {
