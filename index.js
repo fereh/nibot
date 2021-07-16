@@ -74,20 +74,6 @@ function redirectHandler(res) {
 
 function authorizeHandler(res, url, req) {
 
-	// check for grant request from Twitch
-	let params = url.searchParams;
-	if (params.has("code") && params.has("scope") && params.has("state")) {
-		// lookup state
-		let state = params.get("state");
-		state = states.find(x => x === state);
-
-		if (state) {
-			grantHandler(res, params.get("code"));
-			// discard 'scope' param
-			return;
-		}
-	}
-
 	// check for session cookie
 	let cookie = req.getHeader("Cookie");
 	if (cookie && cookie[0]) {
@@ -101,6 +87,20 @@ function authorizeHandler(res, url, req) {
 		}
 	}
 
+	// check for grant request from Twitch
+	let params = url.searchParams;
+	if (params.has("code") && params.has("scope") && params.has("state")) {
+		// lookup state
+		let state = params.get("state");
+		state = states.find(x => x === state);
+
+		if (state) {
+			grantHandler(res, params.get("code"));
+			// discard 'scope' param
+			return;
+		}
+	}
+	
 	// default to auth redirect
 	redirectHandler(res);
 }
