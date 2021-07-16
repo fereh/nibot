@@ -1,6 +1,5 @@
-
-//const fs = require("fs");
 const crypto = require("crypto");
+const storage = require("node-persist");
 
 const twitch = require("./twitch.js");
 const chatbot = require("./chatbot.js");
@@ -13,33 +12,46 @@ function unixTimestamp() {
     return Math.floor(Date.now() / 1000);
 }
 
-var sessions = [];
 
-// note: never cleaned up during runtime,
-// easier (and faster) just to let old states be
+var bots = [];
 var states = [];
+
 
 function grantHandler(res, authCode) {
 
-	let session = {};
+	let account = {};
 
 	// buy the access token
 	twitch.auth.token(authCode).then(json => {
+		if (json.status >= 400) {
+		}
+
+		user.accessToken = json.access_token;
+		user.refreshToken = json.refresh_token;
+
 		// fetch user data
-		session.accessToken = json.access_token;
-		session.refreshToken = json.refresh_token;
+		twitch.auth.userInfo(session.accessToken).then(json => {
+			if (json.status >= 400) {
+			}
 
-		twitch.api.users(session.accessToken).then(json => {
-			let data = json.data[0];
-			session.id = data.id;
-			session.login = data.login;
+			res.writeHead(302, { "Location": "/" });
+			res.end();
+
+			user.id = json.sub;
+			user.login = json.preferred_username;
+
+			// overwrite existing entry
+			let duplicate = sessions.findIndex(x => x.id === session.id);
+			if (duplicate != -1) {
+				users[duplicate] = user;
+			}
+			else {
+				users.push(user);
+			}
+
+			writeUsers();
 		});
-
-		sessions.push(session);
 	});
-
-	res.writeHead(302, { "Location": "/" });
-	res.end();
 }
 
 function redirectHandler(res) {
@@ -132,5 +144,20 @@ function requestHandler(req, res) {
 	const http = require("http");
 	const server = http.createServer(requestHandler);
 	server.listen(PORT);
+
+
+// todo:
+// specify file name, not dir
+// make track/sync function
+	storage.init({ dir: "./storage", }).then(() => {
+		storage.getItem("sessions").then((x) => {
+			if (x) {
+				sessions = x;
+			}
+			else {
+				storage.setItem("sessions", []);
+			}
+		});
+	});
 
 })();

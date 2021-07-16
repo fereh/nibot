@@ -1,9 +1,11 @@
 const qs = require("querystring");
 const fetch = require("node-fetch");
-var client = require("client.json");
 
-// using `localhost' for testing
-client.redirect = client.redirects[1];
+// contains registered Twitch app's client id, secret, and redirects list
+var client = require("./client.json");
+//client.redirect = client.redirects[0];
+client.redirect = client.redirects[1]; // DEBUG
+
 
 // This object would be more useful,
 // except `node-fetch` does all the work :/
@@ -67,7 +69,7 @@ auth.redirect = function (scopes, state) {
 		"response_type": "code",
 		"scope": scopes,
 		"state": state,
-		//"force_verify": "true",
+		//"force_verify": "true", // DEBUG
 	});
 };
 
@@ -99,9 +101,15 @@ auth.revoke = function (accessToken) {
 
 auth.validate = function (accessToken) {
 	return this.fetch("/validate", {
-		headers: { "authorization": `OAuth ${accessToken}`, },
+		headers: { "authorization": `Bearer ${accessToken}`, },
 	}).then(res => res.json());
 };
+
+auth.userInfo = function (accessToken) {
+	return this.fetch("/userinfo", {
+		headers: { "authorization": `Bearer ${accessToken}`, },
+	}).then(res => res.json());
+}
 
 
 module.exports = {
